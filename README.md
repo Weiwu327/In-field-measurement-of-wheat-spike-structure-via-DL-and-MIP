@@ -1,12 +1,41 @@
-# Wheat spike trait measurement — MATLAB (4-stage pipeline)
+# In-field measurement of wheat spike structure via DL and MIP
 
-MATLAB implementation of the wheat-spike trait measurement in *"In-field measurement
-of awn, spikelet, and grain traits in wheat via deep learning and morphological image
-processing"* (Section 2.5). The workflow is split into **four decoupled stages**. The
-two YOLO detection points (full-image ROI detection, and grain detection on the EOA
-crop) are run by the Python detector in `yolov8-pytorch/` (`predict.py` +
-`best_epoch_weights.pth`); the MATLAB stages consume its `.txt` output. See
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
+[![Data: Zenodo](https://img.shields.io/badge/Data-10.5281%2Fzenodo.21226407-blue.svg)](https://doi.org/10.5281/zenodo.21226407)
+
+MATLAB + YOLO implementation of the wheat-spike trait measurement pipeline in
+*"In-field measurement of awn, spikelet, and grain traits in wheat via deep learning
+and morphological image processing."* A YOLO-series detector locates the ruler, ear
+and grains; four decoupled MATLAB stages then quantify **twelve** spike traits (awn
+number/length/area, ear length/width/area, grain and spikelet number, and four
+spatial-distribution traits) from a single smartphone image.
+
+The workflow is split into **four decoupled stages**. The two YOLO detection points
+(full-image ROI detection, and grain detection on the EOA crop) are run by the Python
+detector in `yolov8-pytorch/` (`predict.py` + `best_epoch_weights.pth`); the MATLAB
+stages consume its `.txt` output. See
 [Deep-learning detection](#deep-learning-detection-python) below.
+
+## Citation
+
+If you use this code or data, please cite:
+
+> Wu, W., Zhao, Y., Wang, H., Liu, T., Zhong, X., Maes, W. H., Sun, C., Guo, W.,
+> Sun, T., & Liu, S. In-field measurement of awn, spikelet, and grain traits in wheat
+> via deep learning and morphological image processing. *Plant Phenomics* (under review).
+
+```bibtex
+@article{wu_wheat_spike_traits,
+  title   = {In-field measurement of awn, spikelet, and grain traits in wheat
+             via deep learning and morphological image processing},
+  author  = {Wu, Wei and Zhao, Yuanyuan and Wang, Hui and Liu, Tao and
+             Zhong, Xiaochun and Maes, Wouter H. and Sun, Chengming and
+             Guo, Wenshan and Sun, Tan and Liu, Shengping},
+  journal = {Plant Phenomics},
+  year    = {2026},
+  note    = {Data: \url{https://doi.org/10.5281/zenodo.21226407}}
+}
+```
 
 ## Class convention
 
@@ -18,9 +47,9 @@ One image = one spike.
 
 | Stage | File | Input | Does | Output |
 |------:|------|-------|------|--------|
-| 1 | `stage1_detect.m` | original image | **[your YOLO]** detect RECT/EOA/EWA | full-image `.txt` |
+| 1 | `stage1_detect.m` | original image | **YOLO-series** detect RECT/EOA/EWA | full-image `.txt` |
 | 2 | `stage2_earSizeAndCrop.m` | image + `.txt` | **only** ear size (EL/EW, DL-box, px) + crop RECT/EWA/EOA | 3 crop `.jpg` |
-| 3 | `stage3_scaleAwnGrain.m` | 3 crops | ASOP (RECT) · awn AN/AL/AS (EWA) · **pad EOA to square** (white `-w` for detection, black `-b` for masking) · **[your YOLO]** grains on the white square | `EOA-w.jpg`/`EOA-b.jpg` + grain `.txt` |
+| 3 | `stage3_scaleAwnGrain.m` | 3 crops | ASOP (RECT) · awn AN/AL/AS (EWA) · **pad EOA to square** (white `-w` for detection, black `-b` for masking) · **YOLO-series** grains on the white square | `EOA-w.jpg`/`EOA-b.jpg` + grain `.txt` |
 | 4 | `stage4_remainingTraits.m` | EOA-b square + grain `.txt` + ASOP | ES · MBR ear size · GN · SPN · SPGN · GD · SPD · SPGD | trait struct |
 
 The EOA crop is **centre-padded to a square** (side = max(H,W)) before grain
@@ -34,11 +63,11 @@ Orchestrator `runPipeline.m` chains all four and returns a 1-row trait table.
 
 ```
 runPipeline.m                 original image -> 1-row table of all 12 traits
-├── stage1_detect.m           [YOLO ROI detection — you fill in]
+├── stage1_detect.m           YOLO-series ROI detection (yolov8-pytorch/predict.py)
 ├── stage2_earSizeAndCrop.m
 │   ├── readYoloLabels.m       parse full-image YOLO txt -> pixel boxes by class
 │   └── cropROI.m              crop a [x1 y1 x2 y2] region
-├── stage3_scaleAwnGrain.m     [YOLO grain detection on the EOA square — you fill in]
+├── stage3_scaleAwnGrain.m     YOLO-series grain detection on the EOA square (predict.py)
 │   ├── computeASOP.m          §2.5.1 Eq.6  pixel->mm scale from RECT
 │   ├── preprocessSpike.m      §2.5.2(1) ExB (Eq.7) -> BEWA / BEOA / BA masks
 │   ├── measureAwnNumber.m     §2.5.2(2) convex-hull ∩ skeleton, 50 dilations, ME/MD/TQ
