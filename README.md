@@ -12,7 +12,7 @@ spatial-distribution traits) from a single smartphone image.
 
 The workflow is split into **four decoupled stages**. The two YOLO detection points
 (full-image ROI detection, and grain detection on the EOA crop) are run by the Python
-detector in `yolov8-pytorch/` (`predict.py` + `best_epoch_weights.pth`); the MATLAB
+detector in `YOLO-pytorch/` (`predict.py` + `best_epoch_weights.pth`); the MATLAB
 stages consume its `.txt` output. See
 [Deep-learning detection](#deep-learning-detection-python) below.
 
@@ -63,7 +63,7 @@ Orchestrator `runPipeline.m` chains all four and returns a 1-row trait table.
 
 ```
 runPipeline.m                 original image -> 1-row table of all 12 traits
-├── stage1_detect.m           YOLO-series ROI detection (yolov8-pytorch/predict.py)
+├── stage1_detect.m           YOLO-series ROI detection (YOLO-pytorch/predict.py)
 ├── stage2_earSizeAndCrop.m
 │   ├── readYoloLabels.m       parse full-image YOLO txt -> pixel boxes by class
 │   └── cropROI.m              crop a [x1 y1 x2 y2] region
@@ -83,7 +83,7 @@ demo_pipeline.m               complete demo on ./data (all 12 traits + figure)
 fullGrainsToEoaTxt.m          helper: full-image grains -> EOA-frame grain txt (fallback)
 labelme2yolo.py               convert LabelMe JSON -> YOLO txt (Python)
 
-yolov8-pytorch/               Python detector (Stages 1 & 3)
+YOLO-pytorch/               Python detector (Stages 1 & 3)
 ├── predict.py                run detection -> RECT/EOA/EWA/Grain label .txt
 ├── best_epoch_weights.pth    trained model weights
 └── yolo.py                   model config (model_path, classes, conf, nms)
@@ -126,13 +126,13 @@ Requires the Image Processing Toolbox (`adaptthresh`, `imbinarize`, `bwskel`,
 ## Deep-learning detection (Python)
 
 The two detection steps (Stage 1 and Stage 3) are run by the YOLOv8 code in
-`yolov8-pytorch/`:
+`YOLO-pytorch/`:
 
-- **`yolov8-pytorch/predict.py`** — inference entry point that detects **RECT, EOA
+- **`YOLO-pytorch/predict.py`** — inference entry point that detects **RECT, EOA
   (earn), EWA (eary) and Grain** and writes the normalised `<class> <cx> <cy> <w> <h>`
   label `.txt` files consumed by the MATLAB stages.
-- **`yolov8-pytorch/best_epoch_weights.pth`** — the trained model weights. Point the
-  detector at it by setting `model_path` in `yolov8-pytorch/yolo.py`:
+- **`YOLO-pytorch/best_epoch_weights.pth`** — the trained model weights. Point the
+  detector at it by setting `model_path` in `YOLO-pytorch/yolo.py`:
 
   ```python
   "model_path"  : 'best_epoch_weights.pth',
