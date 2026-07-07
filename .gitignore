@@ -1,0 +1,13 @@
+# macOS
+.DS_Store
+**/.DS_Store
+
+# MATLAB
+*.asv
+*.m~
+slprj/
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
